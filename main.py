@@ -1185,7 +1185,7 @@ class MainWindow(QMainWindow):
         button_layout = QHBoxLayout()
         
         # Bouton de fusion
-        self.fusionButton = QPushButton("🚀 Créer Carte 2D Complète du Sol")
+        self.fusionButton = QPushButton("🚀 Créer Contours 3D qc")
         self.fusionButton.clicked.connect(self.create3DSoilMap)
         self.fusionButton.setEnabled(False)
         self.fusionButton.setStyleSheet("""
@@ -1209,7 +1209,7 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.fusionButton)
         
         # Bouton d'export PDF
-        self.exportFusionPDFButton = QPushButton("📄 Exporter Carte 2D en PDF")
+        self.exportFusionPDFButton = QPushButton("📄 Exporter Contours 3D en PDF")
         self.exportFusionPDFButton.clicked.connect(self.exportFusion3DToPDF)
         self.exportFusionPDFButton.setEnabled(False)
         self.exportFusionPDFButton.setStyleSheet("""
@@ -1235,14 +1235,14 @@ class MainWindow(QMainWindow):
         button_layout.addStretch()
         fusion_layout.addLayout(button_layout)
         
-        # Zone de visualisation 2D complète
+        # Zone de visualisation 3D complète
         self.fusion2DView = QWebEngineView()
         self.fusion2DView.setMinimumHeight(400)
-        fusion_layout.addWidget(QLabel("🗺️ Carte 2D Complète - Vue d'ensemble des Sondages"))
+        fusion_layout.addWidget(QLabel("🗺️ Contours 3D - Graphiques qc de chaque CPTU"))
         fusion_layout.addWidget(self.fusion2DView)
         
-        # Informations sur la carte 2D
-        self.fusion2DInfoLabel = QLabel("Informations sur la carte 2D apparaîtront ici...")
+        # Informations sur les graphiques 3D
+        self.fusion2DInfoLabel = QLabel("Informations sur les contours 3D apparaîtront ici...")
         self.fusion2DInfoLabel.setStyleSheet("font-weight: bold; color: #666;")
         fusion_layout.addWidget(self.fusion2DInfoLabel)
         
@@ -1254,7 +1254,7 @@ class MainWindow(QMainWindow):
         self.fusion_data = {}   # Données fusionnées avec coordonnées
         
         tab.setLayout(layout)
-        self.tabs.addTab(tab, "🗺️ Fusion 2D")
+        self.tabs.addTab(tab, "🗺️ Contours 3D")
 
     def createAnalysisTab(self):
         tab = QWidget()
@@ -3208,19 +3208,19 @@ class MainWindow(QMainWindow):
             # Combiner toutes les données individuelles
             combined_data = pd.concat(individual_data, ignore_index=True)
 
-            # Créer la visualisation 2D individuelle pour chaque sondage
+            # Créer la visualisation 3D de contours pour chaque sondage CPTU
             self.createFused3DVisualization(combined_data)
 
             # Afficher les informations
-            info_text = f"Graphiques 2D individuels créés avec succès!\n"
-            info_text += f"• {len(individual_data)} sondages chargés\n"
+            info_text = f"Graphiques 3D de contours créés avec succès!\n"
+            info_text += f"• {len(individual_data)} CPTU chargés\n"
             info_text += f"• {len(combined_data)} points de données totaux\n"
             info_text += f"• Profondeur max: {combined_data['Depth'].max():.1f} m\n"
 
             self.fusion2DInfoLabel.setText(info_text)
             self.fusion2DInfoLabel.setStyleSheet("font-weight: bold; color: #4CAF50;")
 
-            QMessageBox.information(self, "Succès", "Graphiques 2D individuels créés avec succès!")
+            QMessageBox.information(self, "Succès", "Graphiques 3D de contours créés avec succès!")
 
         except Exception as e:
             QMessageBox.warning(self, "Erreur", f"Erreur lors de la création des graphiques 2D: {e}")
@@ -3869,11 +3869,9 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             QMessageBox.warning(self, "Erreur", f"Erreur lors de l'auto-détection: {e}")
 
     def createFused3DVisualization(self, fused_data):
-        """Créer la visualisation 3D de contours pour chaque sondage CPTU"""
+        """Créer la visualisation de contours 3D pour chaque sondage CPTU"""
         try:
-            from scipy.interpolate import griddata
-
-            # Créer des graphiques 3D individuels pour chaque sondage
+            # Créer des graphiques de contours individuels pour chaque sondage
             sondages = fused_data['Sondage'].unique()
             n_sondages = len(sondages)
 
@@ -3881,11 +3879,11 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             n_cols = int(np.ceil(np.sqrt(n_sondages)))
             n_rows = int(np.ceil(n_sondages / n_cols))
 
-            # Créer la figure avec sous-graphiques 3D
-            specs = [[{'type': 'scene'} for _ in range(n_cols)] for _ in range(n_rows)]
+            # Créer la figure avec sous-graphiques 2D
+            specs = [[{} for _ in range(n_cols)] for _ in range(n_rows)]
             fig = make_subplots(
                 rows=n_rows, cols=n_cols,
-                subplot_titles=[f'Sondage {sondage}' for sondage in sondages],
+                subplot_titles=[f'Contours qc de {sondage}' for sondage in sondages],
                 specs=specs,
                 shared_xaxes=False,
                 shared_yaxes=False
@@ -3905,15 +3903,15 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
                 # Créer une grille régulière pour l'interpolation
                 depth_values = sondage_data['Depth'].values
                 qc_values = sondage_data['qc'].values if 'qc' in sondage_data.columns else sondage_data['fs'].values
+                fs_values = sondage_data['fs'].values if 'fs' in sondage_data.columns else sondage_data['qc'].values
 
                 # Vérifier que les données sont valides
-                if len(depth_values) < 3 or len(qc_values) < 3:
+                if len(depth_values) < 3 or len(qc_values) < 3 or len(fs_values) < 3:
                     # Pas assez de données pour l'interpolation, afficher seulement les points
                     fig.add_trace(
-                        go.Scatter3d(
+                        go.Scatter(
                             x=depth_values,
-                            y=[idx] * len(depth_values),
-                            z=qc_values,
+                            y=qc_values,
                             mode='markers',
                             marker=dict(size=6, color='red'),
                             name=f'Données {sondage} (pas assez de points)',
@@ -3924,9 +3922,10 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
                     continue
 
                 # Nettoyer les données (supprimer NaN et infinis)
-                valid_mask = ~(np.isnan(depth_values) | np.isnan(qc_values) | np.isinf(depth_values) | np.isinf(qc_values))
+                valid_mask = ~(np.isnan(depth_values) | np.isnan(qc_values) | np.isnan(fs_values) | np.isinf(depth_values) | np.isinf(qc_values) | np.isinf(fs_values))
                 depth_clean = depth_values[valid_mask]
                 qc_clean = qc_values[valid_mask]
+                fs_clean = fs_values[valid_mask]
 
                 if len(depth_clean) < 3:
                     # Pas assez de données valides
@@ -3943,21 +3942,15 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
                     )
                     continue
 
-                # Créer un graphique 3D Scatter pour ce sondage
+                # Créer un graphique de contour 2D pour ce sondage
                 fig.add_trace(
-                    go.Scatter3d(
+                    go.Contour(
                         x=depth_clean,
-                        y=[idx] * len(depth_clean),  # Utiliser l'index du sondage pour séparer
-                        z=qc_clean,
-                        mode='markers',
-                        marker=dict(
-                            size=4,
-                            color=qc_clean,
-                            colorscale='Viridis',
-                            showscale=False,
-                            opacity=0.8
-                        ),
-                        name=f'Sondage {sondage}',
+                        y=qc_clean,
+                        z=fs_clean,
+                        colorscale='Viridis',
+                        contours=dict(showlabels=True),
+                        name=f'Contours {sondage}',
                         showlegend=False
                     ),
                     row=row, col=col
@@ -3967,7 +3960,7 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
 
             # Configuration du layout
             fig.update_layout(
-                title="Visualisations 3D - Chaque Sondage CPTU",
+                title="Graphiques 3D de Contours qc de chaque CPTU",
                 height=max(400, 300 * n_rows),
                 width=None,
                 showlegend=False,
@@ -3978,12 +3971,8 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             # Mettre à jour les axes pour chaque sous-graphique
             for i in range(1, n_rows + 1):
                 for j in range(1, n_cols + 1):
-                    fig.update_scenes(
-                        xaxis_title="Profondeur (cm)",
-                        yaxis_title="Sondage",
-                        zaxis_title="qc (MPa)" if 'qc' in fused_data.columns else "fs (kPa)",
-                        row=i, col=j
-                    )
+                    fig.update_xaxes(title_text="Profondeur (cm)", row=i, col=j)
+                    fig.update_yaxes(title_text="qc (MPa)", row=i, col=j)
 
             # Convertir en HTML et afficher
             html_content = fig.to_html(include_plotlyjs='cdn', full_html=False, config={'responsive': True})
@@ -3993,7 +3982,7 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             self.exportFusionPDFButton.setEnabled(True)
 
             # Informations sur les graphiques
-            info_text = f"Graphiques 2D créés pour {n_sondages} sondages:\n"
+            info_text = f"Graphiques 3D de contours créés pour {n_sondages} CPTU:\n"
             for sondage in sondages:
                 sondage_data = fused_data[fused_data['Sondage'] == sondage]
                 info_text += f"• {sondage}: {len(sondage_data)} points\n"
@@ -4001,24 +3990,24 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             self.fusion2DInfoLabel.setText(info_text)
             self.fusion2DInfoLabel.setStyleSheet("font-weight: bold; color: #2196F3;")
 
-            print("✅ Graphiques 2D individuels créés avec succès")
+            print("✅ Graphiques 3D de contours créés avec succès")
 
         except Exception as e:
-            error_html = f"<h1>Erreur 2D Individuelle: {str(e)}</h1><p>Vérifiez que scipy est installé pour l'interpolation.</p>"
+            error_html = f"<h1>Erreur Contours 3D: {str(e)}</h1><p>Vérifiez que les données sont valides.</p>"
             self.fusion2DView.setHtml(error_html)
             print(f"❌ Erreur dans createFused3DVisualization: {e}")
             import traceback
             traceback.print_exc()
 
     def exportFusion3DToPDF(self):
-        """Exporter la carte 2D fusionnée en PDF"""
+        """Exporter les contours 3D fusionnés en PDF"""
         try:
             if not hasattr(self, 'fused_data') or self.fused_data is None or self.fused_data.empty:
-                QMessageBox.warning(self, "Erreur", "Aucune carte 2D à exporter.")
+                QMessageBox.warning(self, "Erreur", "Aucune visualisation 3D à exporter.")
                 return
 
             # Demander le nom du fichier
-            fileName, _ = QFileDialog.getSaveFileName(self, "Sauvegarder Carte 2D PDF", "",
+            fileName, _ = QFileDialog.getSaveFileName(self, "Sauvegarder Contours 3D PDF", "",
                                                       "Fichiers PDF (*.pdf);;Tous les fichiers (*)")
 
             if not fileName:
@@ -4091,7 +4080,7 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
 
             # Titre
             c.setFont("Helvetica-Bold", 16)
-            c.drawString(50, height - 50, "Carte 3D Complète du Sous-Sol")
+            c.drawString(50, height - 50, "Contours 3D - Graphiques qc de chaque CPTU")
             c.setFont("Helvetica", 12)
             c.drawString(50, height - 70, f"Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
             c.drawString(50, height - 85, f"Nombre de sondages: {len(sondages)}")
@@ -4124,7 +4113,7 @@ Réponds UNIQUEMENT avec: X=123.45, Y=67.89
             os.unlink(tmp_filename)
             c.save()
             
-            QMessageBox.information(self, "Succès", f"Carte 3D exportée en PDF:\n{fileName}")
+            QMessageBox.information(self, "Succès", f"Contours 3D exportés en PDF:\n{fileName}")
 
         except ImportError as e:
             QMessageBox.warning(self, "Erreur", f"Bibliothèque manquante: {e}\n\nInstallez reportlab: pip install reportlab")
