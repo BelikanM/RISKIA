@@ -1,0 +1,56 @@
+{
+    "python": {
+        "pythonPath": "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD\\python311\\python.exe",
+        "venvPath": "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD\\python311",
+        "venv": "python311",
+        "analysis": {
+            "extraPaths": [
+                "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD\\dust3r",
+                "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD",
+                "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD\\python311\\Lib\\site-packages",
+                "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD\\python311\\Lib"
+            ],
+            "diagnosticSeverityOverrides": {
+                "reportMissingImports": "none",
+                "reportMissingModuleSource": "none",
+                "reportPossiblyUnboundVariable": "none",
+                "reportUndefinedVariable": "none",
+                "reportImportCycles": "none",
+                "reportUnusedImport": "none",
+                "reportUnusedVariable": "none",
+                "reportGeneralTypeIssues": "none",
+                "reportOptionalMemberAccess": "none",
+                "reportOptionalCall": "none",
+                "reportOptionalIterable": "none",
+                "reportOptionalSubscript": "none",
+                "reportPrivateUsage": "none"
+            },
+            "typeCheckingMode": "off",
+            "autoSearchPaths": true,
+            "useLibraryCodeForTypes": false,
+            "stubPath": "C:\\Users\\Admin\\Desktop\\logiciel\\KIBALISTONEGOD"
+        }
+    },
+    "include": [
+        "Dust3r.py",
+        "texture_pbr_analyzer.py",
+        "intelligent_vfx_engine.py",
+        "auto_pbr_mapper.py",
+        "texture_download_manager.py",
+        "advanced_3d_renderer.py",
+        "advanced_vfx_engine.py",
+        "demo_rendu_avance.py",
+        "test_pylance_imports.py",
+        "pylance_stubs.pyi"
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/node_modules",
+        "**/.git",
+        "**/models",
+        "**/python311",
+        "**/build",
+        "**/dist",
+        "**/*.pyc"
+    ]
+}

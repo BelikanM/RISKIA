@@ -1,0 +1,139 @@
+{
+  "scene_graph": {
+    "metadata": {
+      "version": "1.0",
+      "created_by": "DUST3R Scene Graph Builder",
+      "spatial_threshold": 3.0
+    },
+    "objects": {
+      "table_1": {
+        "category": "furniture",
+        "position": [
+          0.0,
+          0.0,
+          0.75
+        ],
+        "dimensions": [
+          1.5,
+          0.8,
+          0.05
+        ],
+        "orientation": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "confidence": 0.95,
+        "semantic_label": "Table en bois"
+      },
+      "chair_1": {
+        "category": "furniture",
+        "position": [
+          0.0,
+          -1.2,
+          0.45
+        ],
+        "dimensions": [
+          0.5,
+          0.5,
+          0.9
+        ],
+        "orientation": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "confidence": 0.9,
+        "semantic_label": "Chaise"
+      },
+      "door_1": {
+        "category": "door",
+        "position": [
+          2.5,
+          0.0,
+          1.0
+        ],
+        "dimensions": [
+          0.1,
+          0.9,
+          2.0
+        ],
+        "orientation": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "confidence": 0.85,
+        "semantic_label": "Porte d'entrée"
+      },
+      "window_1": {
+        "category": "window",
+        "position": [
+          0.0,
+          3.0,
+          1.5
+        ],
+        "dimensions": [
+          1.2,
+          0.1,
+          1.0
+        ],
+        "orientation": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "confidence": 0.8,
+        "semantic_label": "Fenêtre"
+      }
+    },
+    "relations": [
+      {
+        "source": "table_1",
+        "target": "chair_1",
+        "relation": "near",
+        "confidence": 0.587689437438234,
+        "distance": 1.2369316876852983
+      },
+      {
+        "source": "table_1",
+        "target": "door_1",
+        "relation": "right_of",
+        "confidence": 1.0,
+        "distance": 2.5124689052802225
+      },
+      {
+        "source": "chair_1",
+        "target": "table_1",
+        "relation": "near",
+        "confidence": 0.587689437438234,
+        "distance": 1.2369316876852983
+      },
+      {
+        "source": "chair_1",
+        "target": "door_1",
+        "relation": "right_of",
+        "confidence": 1.0,
+        "distance": 2.8271009886454355
+      },
+      {
+        "source": "door_1",
+        "target": "table_1",
+        "relation": "left_of",
+        "confidence": 1.0,
+        "distance": 2.5124689052802225
+      },
+      {
+        "source": "door_1",
+        "target": "chair_1",
+        "relation": "left_of",
+        "confidence": 1.0,
+        "distance": 2.8271009886454355
+      }
+    ]
+  }
+}
