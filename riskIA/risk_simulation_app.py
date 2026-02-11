@@ -35,9 +35,10 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QPushButton, QLabel, QLineEdit,
     QFileDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QComboBox, QMessageBox, QTextEdit, QCheckBox, QScrollArea
 )
-from PyQt6.QtGui import QPixmap, QImage, QDesktopServices
+from PyQt6.QtGui import QPixmap, QImage, QDesktopServices, QIcon
 from PyQt6.QtCore import Qt, QUrl, QThread, pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtSvgWidgets import QSvgWidget
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -482,6 +483,53 @@ class RiskSimulator(QMainWindow):
         super().__init__()
         self.setWindowTitle("AI Risk Simulator - Industrial & Oil")
         self.setGeometry(100, 100, 1500, 900)
+        self.setWindowIcon(QIcon(os.path.join(script_dir, "logo_animated.svg")))
+
+        # Appliquer le thème bleu marine royal et blanc cassé, retirer le noir
+        self.setStyleSheet("""
+        QMainWindow {
+            background-color: #FAF9F6; /* Blanc cassé */
+        }
+        QWidget {
+            background-color: #FAF9F6;
+            color: #4169E1; /* Bleu marine royal */
+        }
+        QPushButton {
+            background-color: #4169E1;
+            color: #FAF9F6;
+            border: 1px solid #3158A3;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        QPushButton:hover {
+            background-color: #3158A3;
+        }
+        QTabWidget::pane {
+            border: 1px solid #4169E1;
+            background-color: #FAF9F6;
+        }
+        QTabBar::tab {
+            background-color: #FAF9F6;
+            color: #4169E1;
+            padding: 8px 12px;
+            border: 1px solid #4169E1;
+            border-bottom: none;
+        }
+        QTabBar::tab:selected {
+            background-color: #4169E1;
+            color: #FAF9F6;
+        }
+        QLabel {
+            color: #4169E1;
+        }
+        QLineEdit, QTextEdit, QComboBox {
+            background-color: #FFFFFF;
+            color: #4169E1;
+            border: 1px solid #4169E1;
+            border-radius: 3px;
+            padding: 2px;
+        }
+        """)
 
         self.image = None
         self.image_path = None
@@ -517,6 +565,11 @@ class RiskSimulator(QMainWindow):
         }
 
         self.tabs = QTabWidget()
+
+        # Ajouter le logo animé dans le coin supérieur droit des onglets
+        self.logo = QSvgWidget(os.path.join(script_dir, "logo_animated.svg"))
+        self.logo.setFixedSize(40, 40)  # Taille réduite pour un meilleur placement
+        self.tabs.setCornerWidget(self.logo)
 
         # Historique du chat IA
         self.chat_history = []
@@ -1030,6 +1083,27 @@ class RiskSimulator(QMainWindow):
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         logging.info("Création de SimulationEngine")
         self.sim_engine = SimulationEngine(gray)
+
+        # Générer le rendu 3D réaliste du terrain
+        if self.image is not None:
+            h, w = gray.shape
+            x = np.linspace(0, w, w)
+            y = np.linspace(0, h, h)
+            X, Y = np.meshgrid(x, y)
+            Z = gray.astype(float) / 255.0
+            fig = go.Figure(data=[go.Surface(z=Z, x=X, y=Y, colorscale='Earth')])
+            fig.update_layout(
+                title='Terrain 3D Réaliste',
+                scene=dict(
+                    xaxis_title='X',
+                    yaxis_title='Y',
+                    zaxis_title='Élévation',
+                    camera=dict(eye=dict(x=1.5, y=1.5, z=1.5))
+                ),
+                margin=dict(l=0, r=0, b=0, t=40)
+            )
+            html = fig.to_html(include_plotlyjs='cdn', full_html=False)
+            self.web_view.setHtml(html)
 
         # Mettre à jour l'affichage des paramètres IoT
         self.update_iot_params_display()
@@ -2407,7 +2481,7 @@ class RiskSimulator(QMainWindow):
         # Afficher les statistiques
         y_pos = 50
         ax.text(20, y_pos, "📈 STATISTIQUES DES RISQUES", fontsize=12, fontweight='bold', 
-               color='white', bbox=dict(facecolor='black', alpha=0.8))
+               color='white', bbox=dict(facecolor='royalblue', alpha=0.8))
         y_pos += 30
         
         for hazard, max_r, avg_r, area in stats:
@@ -2428,12 +2502,12 @@ class RiskSimulator(QMainWindow):
         ]
         
         ax.text(20, legend_y, "🎨 LÉGENDE DES COULEURS", fontsize=12, fontweight='bold', 
-               color='white', bbox=dict(facecolor='black', alpha=0.8))
+               color='white', bbox=dict(facecolor='royalblue', alpha=0.8))
         legend_y += 30
         
         for item, desc in legend_items:
             ax.text(20, legend_y, f"{item} {desc}", fontsize=10, color='white', 
-                   bbox=dict(facecolor='black', alpha=0.6))
+                   bbox=dict(facecolor='royalblue', alpha=0.6))
             legend_y += 20
         
         ax.axis('off')
@@ -4137,7 +4211,7 @@ Généré le: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
                 info_text += f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
 
                 ax1.text(10, 50, info_text, fontsize=10, color='white',
-                        bbox=dict(facecolor='black', alpha=0.7, edgecolor='white'))
+                        bbox=dict(facecolor='royalblue', alpha=0.7, edgecolor='white'))
 
                 # Sous-plot 2: Résumé des analyses
                 ax2.axis('off')
