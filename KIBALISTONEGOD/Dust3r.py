@@ -134,6 +134,20 @@ except ImportError:
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
+# Fonction de nettoyage du session state pour éviter les conflits DOM
+def clear_session_state():
+    """Nettoie le session state pour éviter les conflits d'éléments DOM dupliqués"""
+    keys_to_clear = [
+        'advanced_denoising_params', 'mesh_params', 'vfx_params',
+        'pbr_analysis_results', 'scene_graph_data', 'texture_analysis'
+    ]
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
+
+# Nettoyer le session state au démarrage pour éviter les conflits
+clear_session_state()
+
 # Fonction pour géoréférencement
 def gps_to_local_coords(lat, lon, alt, ref_lat, ref_lon, ref_alt):
     """
@@ -319,7 +333,16 @@ def setup_ui():
     """Configure l'interface utilisateur principale"""
     st.title("📸 Application de Photogrammétrie Complète SETRAF GABON développée par NYUNDU FRANCIS ARNAUD")
     st.markdown("---")
-    st.markdown("Cette application permet de charger plusieurs images, d'effectuer une reconstruction 3D dense à partir de paires d'images en utilisant le modèle DUSt3R ou MapAnything, et de visualiser le nuage de points aligné globalement avec textures réalistes et option de maillage complet ultra-réaliste.")
+
+    # Bouton de réinitialisation du session state pour éviter les erreurs DOM
+    col_reset, col_info = st.columns([1, 3])
+    with col_reset:
+        if st.button("🔄 Réinitialiser l'interface", help="Nettoie le session state pour résoudre les erreurs d'affichage"):
+            clear_session_state()
+            st.rerun()
+
+    with col_info:
+        st.markdown("Cette application permet de charger plusieurs images, d'effectuer une reconstruction 3D dense à partir de paires d'images en utilisant le modèle DUSt3R ou MapAnything, et de visualiser le nuage de points aligné globalement avec textures réalistes et option de maillage complet ultra-réaliste.")
 
     # Monitoring et sélection device
     use_gpu = st.sidebar.checkbox("Utiliser GPU (désactiver si surchauffe)", value=True, help="Désactivez pour forcer CPU en cas de surchauffe GPU.")
@@ -1149,6 +1172,7 @@ with col1:
                 st.metric("Outliers Supprimés", f"{outliers:,}" if outliers > 0 else "N/A")
 
     # Section informative sur le Débruitage Industriel Avancé
+    denoising_key = f"denoising_expander_{hash('denoising')}"
     with st.expander("🔬 Débruitage Industriel Avancé (Inspired by Vitreous/Telekinesis)", expanded=False):
         st.markdown("""
         **Inspiré par l'article : "How to Denoise Industrial 3D Point Clouds in Python: 3D Filtering with Vitreous from Telekinesis"**
@@ -1221,47 +1245,53 @@ with col1:
 
         # Contrôles avancés pour le débruitage
         st.markdown("### ⚙️ Contrôles Avancés du Débruitage")
-        advanced_denoising = st.checkbox("Activer Débruitage Industriel Avancé", value=True, key="advanced_denoising_main",
+        
+        # Initialiser les valeurs par défaut dans le session state si elles n'existent pas
+        if 'advanced_denoising_enabled' not in st.session_state:
+            st.session_state.advanced_denoising_enabled = True
+        if 'denoising_params' not in st.session_state:
+            st.session_state.denoising_params = {
+                'statistical_neighbors': 30,
+                'radius_min_points': 16,
+                'mls_polynomial_order': 1,
+                'color_neighbors': 15
+            }
+        
+        advanced_denoising = st.checkbox("Activer Débruitage Industriel Avancé", 
+                                       value=st.session_state.advanced_denoising_enabled,
+                                       key="advanced_denoising_checkbox",
                                        help="Pipeline complet de 6 étapes pour le débruitage professionnel")
+        st.session_state.advanced_denoising_enabled = advanced_denoising
 
         if advanced_denoising:
             col1, col2 = st.columns(2)
             with col1:
-                statistical_neighbors = st.slider("Voisins pour filtrage statistique", 10, 100, 30, key="statistical_neighbors_main",
+                statistical_neighbors = st.slider("Voisins pour filtrage statistique", 10, 100, 
+                                                st.session_state.denoising_params['statistical_neighbors'],
+                                                key="statistical_neighbors_slider",
                                                 help="Nombre de voisins pour la détection d'outliers statistiques")
-                radius_min_points = st.slider("Points minimum par rayon", 5, 50, 16, key="radius_min_points_main",
+                radius_min_points = st.slider("Points minimum par rayon", 5, 50,
+                                            st.session_state.denoising_params['radius_min_points'],
+                                            key="radius_min_points_slider",
                                             help="Nombre minimum de voisins dans le rayon pour validation")
             with col2:
-                mls_polynomial_order = st.selectbox("Ordre polynomial MLS", [1, 2], index=0, key="mls_polynomial_order_main",
+                mls_polynomial_order = st.selectbox("Ordre polynomial MLS", [1, 2],
+                                                  index=st.session_state.denoising_params['mls_polynomial_order'] - 1,
+                                                  key="mls_polynomial_order_select",
                                                   help="Degré du polynôme pour le lissage (2 = plus précis mais lent)")
-                color_neighbors = st.slider("Voisins pour débruitage couleurs", 5, 30, 15, key="color_neighbors_main",
+                color_neighbors = st.slider("Voisins pour débruitage couleurs", 5, 30,
+                                          st.session_state.denoising_params['color_neighbors'],
+                                          key="color_neighbors_slider",
                                           help="Nombre de voisins pour le filtrage bilatéral des couleurs")
 
-        # Contrôles avancés pour le débruitage
-        st.markdown("### ⚙️ Contrôles Avancés du Débruitage")
-        advanced_denoising = st.checkbox("Activer Débruitage Industriel Avancé", value=True, key="advanced_denoising_secondary",
-                                       help="Pipeline complet de 6 étapes pour le débruitage professionnel")
-
-        if advanced_denoising:
-            col1, col2 = st.columns(2)
-            with col1:
-                statistical_neighbors = st.slider("Voisins pour filtrage statistique", 10, 100, 30, key="statistical_neighbors_secondary",
-                                                help="Nombre de voisins pour la détection d'outliers statistiques")
-                radius_min_points = st.slider("Points minimum par rayon", 5, 50, 16, key="radius_min_points_secondary",
-                                            help="Nombre minimum de voisins dans le rayon pour validation")
-            with col2:
-                mls_polynomial_order = st.selectbox("Ordre polynomial MLS", [1, 2], index=0, key="mls_polynomial_order_secondary",
-                                                  help="Degré du polynôme pour le lissage (2 = plus précis mais lent)")
-                color_neighbors = st.slider("Voisins pour débruitage couleurs", 5, 30, 15, key="color_neighbors_secondary",
-                                          help="Nombre de voisins pour le filtrage bilatéral des couleurs")
-
-            # Mise à jour des paramètres globaux
-            st.session_state.advanced_denoising_params = {
+            # Mise à jour des paramètres
+            st.session_state.denoising_params = {
                 'statistical_neighbors': statistical_neighbors,
                 'radius_min_points': radius_min_points,
                 'mls_polynomial_order': mls_polynomial_order,
                 'color_neighbors': color_neighbors
             }
+            st.session_state.advanced_denoising_params = st.session_state.denoising_params
 
     # Section informative sur le Downsampling Temps Réel
     with st.expander("⚡ Downsampling Temps Réel Ultra-Rapide (Inspired by Sohail Saifi)", expanded=False):
